@@ -11,35 +11,38 @@ class Template(object):
 	def __init__(self, args):
 		super(Template, self).__init__()
 		self.args = args
-		self.sub  = rospy.Subscriber('duckiebot/joy', Joy, self.callback)
-		self.pub = rospy.Publisher('duckiebot/possible_cmd', Twist2DStamped, queue_size = 10 )
+		self.pato = False
+		self.sub1  = rospy.Subscriber('duckiebot/possible_cmd', Twist2DStamped, self.callback)
+		self.sub2 = rospy.Subscriber('duckiebot/dist', Point, self.callback2)
+		self.pub = rospy.Publisher('duckiebot/wheels_driver_node/car_cmd',Twist2DStamped, queue_size = 10 )
 
 	#def publicar(self):
+	
 
 	def callback(self,msg):
-		msg.axes = list(msg.axes)
-		if msg.buttons[1] == 1:
-			msg.axes[0] = 0
-			msg.axes[1] = 0
-			print("CUAC")
-		
-		Y = msg.axes[0]
-		X = msg.axes[1]
-		
-		print(msg.axes)
-		
-		Datos = Twist2DStamped()
-		Datos.v = X*1.5
-		Datos.omega = Y*(7.5)
+		Datos = msg
+		if self.pato == True and Datos.v > 0:
+			Datos.v = 0
+			print(Datos)
 		self.pub.publish(Datos)
+			
+
+	def callback2(self,msg):
 	
-def mapeo(inf, sup, val):
-	delta = (abs(sup) - abs(inf))*0.5
-	escala = sup - delta
-	return 1.0*escala*val + 1.0*delta
+		dist = msg.z
+		minDist = 8
+		print(self.pato)
+		if dist <= minDist:
+			self.pato = True
+		else:
+			self.pato = False
+			
+		
+	
+
 	
 def main():
-	rospy.init_node('niue') #creacion y registro del nodo!
+	rospy.init_node('niuetemplate') #creacion y registro del nodo!
 
 	obj = Template('args') # Crea un objeto del tipo Template, cuya definicion se encuentra arriba
 
